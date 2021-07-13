@@ -6,7 +6,6 @@ import time
 from data_utils import *
 from params import *
 from network_utils import *
-from keras import backend as K
 from training_utils import *
 from loss import MSE
 
@@ -64,5 +63,3 @@ np.savetxt('best_model/MSE_testset.csv', MSE_testset, delimiter=',', header='MSE
 print(np.mean(MAE_testset))
 end = time.time()
 print(end - start)
-
-K.clear_session()

@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from keras import backend as K
 
 from params import *
 from network_utils import *
@@ -73,4 +72,3 @@ pred2 = np.zeros((129,3))#59
 pred3 = pred[5:,:]
 pred = np.vstack([pred1, pred2, pred3])
 np.savetxt('best_model/naca.csv', pred, delimiter=',', header='u,v,p', fmt='%1.16f', comments='')
-K.clear_session()
