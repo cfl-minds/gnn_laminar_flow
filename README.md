@@ -1,7 +1,12 @@
-This is the git repository for the paper '[Graph neural networks for laminar flow prediction around random 2D shapes](https://www.google.com)'
-![architecture](./images/architecture.png)
+# gnn_laminar_flow
 
-The proposed graph convolutional neural network works on triangular meshes. It takes the coordinates of nodes and the binary encoding of the solid surface as the inputs. It predicts velocity and pressure fields around random 2D shapes at a low Reynolds number. Compare to U-nets, the graph models have higher accuracy, require fewer trainable parameters, take longer time for training.
+A project concerned with the prediction of (laminar) velocity and pressure fields from an input shape using graph neural network architectures. If you exploit this work for your own research, please consider citing **to complete**. **This work was produced during the PhD thesis of <a href="https://github.com/junfeng-chen">J. Chen</a>.**
+
+<p align="center">
+  <img src="./images/architecture.png" width=600/>
+</p>
+
+The proposed graph convolutional neural network works on triangular meshes, taking the coordinates of nodes and the binary encoding of the solid surface as inputs, and predicts velocity and pressure fields around random 2D shapes at a low Reynolds number. Compared to U-nets, the graph models have higher accuracy and requires fewer trainable parameters, but require an extended training time.
 
 <p align="center">
   <img src="./images/mesh.png" width=200 height=200/>
@@ -11,9 +16,8 @@ The data set contains 2000 random 2D obstacles, together with the laminar veloci
 - J. Viquerat and E. Hachem, "[A supervised neural network for drag prediction of arbitrary 2D shapes in laminar flows at low Reynolds number](https://github.com/jviquerat/cnn_drag_prediction)"
 - J. Chen, J. Viquerat and E. Hachem, "[A twin-decoder structure for incompressible laminar flow reconstruction with uncertainty estimation around 2D obstacles](https://github.com/jviquerat/twin_autoencoder)"
 
-The entire project are has been validated in **Ubuntu 20.04**. To reproduce the results, it is preferred to creat a virtual environment with **python==3.6.9**, and install the packages listed in **requirements.txt**.
-
 ## Structure of the repository
+
 - **dataset_utils** : functions concerning the data
 - **network_utils** : functions and classes concerning the convolutional blocks and network architecture
 - **params** : directions, network hyper-parameters etc..
@@ -23,20 +27,8 @@ The entire project are has been validated in **Ubuntu 20.04**. To reproduce the 
 - **training_utils** : functions used for custom training loops
 - **best_model** : save model parameters during the training process
 
-## Model training
-To train a model, run
-```
-python3 training.py
-```
+## Training the model
 
-Network hyper-parameters are configurable in
-```
-params.py
-```
-
-Network architecture is defined in
-```
-network_utils.py
-```
+To train a model, first install the required packages in a dedicated virtual environment, then run `python3 training.py`. Network hyper-parameters can be configured in `params.py`, while the architecture is described in `network_utils.py`.
 
 ![cylinder](./images/cylinder.png)
