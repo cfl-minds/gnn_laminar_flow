@@ -29,6 +29,6 @@ The data set contains 2000 random 2D obstacles, together with the laminar veloci
 
 ## Training the model
 
-To train a model, first install the required packages in a dedicated virtual environment, then run `python3 training.py`. Network hyper-parameters can be configured in `params.py`, while the architecture is described in `network_utils.py`.
+To train a model, first install the required packages in a dedicated virtual environment, then run `python3 training.py`. Network hyper-parameters can be configured in `params.py`, while the architecture is described in `network_utils.py`. Below is a result sample from the article.
 
 ![cylinder](./images/cylinder.png)
