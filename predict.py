@@ -1,15 +1,10 @@
-import numpy as np
-import pandas as pd
-import tensorflow as tf
-
-from params import *
 from network_utils import *
 from training_utils import *
-from data_utils import load_data, lift_drag
+from data_utils import lift_drag
 
 
-best_model   = invariant_edge_model(edge_feature_dims, num_filters, initializer)
-best_model.load_weights('./best_model/best_model')
+best_model   = InvariantEdgeModel(edge_feature_dims, num_filters, initializer)
+best_model.load_weights('./best_model/best_model_e713')
 
 #nodes = pd.read_csv('../data/cylindre/nodes.csv')[['x', 'y', 'Object']].values.astype('float32')#, 'u_bc1', 'u_bc2', 'dist0']]
 #flow  = pd.read_csv('../data/cylindre/flow.csv').values.astype('float32')
@@ -43,7 +38,7 @@ max_values = tf.constant([1.4902634620666504, 0.799094557762146, 1.5584141016006
 flow2 = tf.math.divide(tf.math.subtract(flow, min_values), tf.math.subtract(max_values, min_values))
 
 ##### compute MAE
-count = count_neighb_elements(nodes, edges)
+count = count_neighbour_edges(nodes, edges)
 print('{} nodes, {} edges.'.format(nodes.numpy().shape[0], edges.numpy().shape[0]))
 print(' ')
 
