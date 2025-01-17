@@ -26,4 +26,6 @@ edge_feature_dims = 4 * np.array([1, 2, 4, 8,
                                  16, 16, 8, 4])
 num_filters       = 4 * np.array([2, 4, 8, 16,
                                   16, 8, 4, 2])
+depth             = 8
+mlp_width         = 128
 initializer = tf.keras.initializers.GlorotNormal(seed=10000)

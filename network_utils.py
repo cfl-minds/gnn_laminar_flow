@@ -37,7 +37,7 @@ def update_node_features(node_features, grad_P1, message_fn):
      and returns output (n_nodes, n_features)
     """
     message_input = tf.keras.layers.concatenate([node_features, grad_P1], axis=1)
-    updated = message_fn(message_input)
+    updated       = message_fn(message_input)
 
     return updated
 
@@ -49,7 +49,7 @@ class EdgeSmoothing(tf.keras.layers.Layer):
     def call(self, to_concat, node_features, edges, count):
         n_nodes        = tf.shape(node_features)[0]
         flow_on_edge   = tf.math.reduce_mean(tf.gather(node_features, edges), 1)  # n_edges, n_features
-        aggre_flow = tf.math.add(tf.math.unsorted_segment_sum(flow_on_edge[:, :], edges[:, 0], n_nodes),
+        aggre_flow     = tf.math.add(tf.math.unsorted_segment_sum(flow_on_edge[:, :], edges[:, 0], n_nodes),
                                  tf.math.unsorted_segment_sum(flow_on_edge[:, :], edges[:, 1], n_nodes))
 
         return tf.keras.layers.concatenate([to_concat, tf.math.divide(aggre_flow, count)], axis=1)
@@ -100,15 +100,16 @@ class InvariantEdgeConv(tf.keras.layers.Layer):
     :
     """
 
-    def __init__(self, edge_feature_dim, num_filters, initializer):
+    def __init__(self, edge_feature_dim, num_filters, mlp_width, initializer):
 
         super(InvariantEdgeConv, self).__init__()
 
         self.edge_feat_dim     = edge_feature_dim
         self.num_filters       = num_filters
         self.initializer       = initializer
-        self.message_fn_edge = MLP(128, self.edge_feat_dim, self.initializer)
-        self.message_fn_node = MLP(128, self.num_filters, self.initializer)
+        self.mlp_width         = mlp_width
+        self.message_fn_edge   = MLP(self.mlp_width, self.edge_feat_dim, self.initializer)
+        self.message_fn_node   = MLP(self.mlp_width, self.num_filters, self.initializer)
 
     def call(self, node_features, edge_features, edges):
 
@@ -120,71 +121,38 @@ class InvariantEdgeConv(tf.keras.layers.Layer):
 
         return updated_node_features, updated_edge_features
 
-
 class InvariantEdgeModel(tf.keras.Model):
-    def __init__(self, edge_feature_dims, num_filters, initializer):
+    def __init__(self, edge_feature_dims, num_filters, depth, mlp_width, initializer):
         super(InvariantEdgeModel, self).__init__()
 
         self.edge_feat_dims = edge_feature_dims
         self.num_filters    = num_filters
-        self.initializer     = initializer
+        self.depth          = depth
+        self.mlp_width      = mlp_width
+        self.initializer    = initializer
 
-        self.layer0  = InvariantEdgeConv(self.edge_feat_dims[0], self.num_filters[0], self.initializer)
-        self.layer00 = EdgeSmoothing()
-        
-        self.layer1  = InvariantEdgeConv(self.edge_feat_dims[1], self.num_filters[1], self.initializer)
-        self.layer11 = EdgeSmoothing()
-        
-        self.layer2  = InvariantEdgeConv(self.edge_feat_dims[2], self.num_filters[2], self.initializer)
-        self.layer22 = EdgeSmoothing()
-        
-        self.layer3  = InvariantEdgeConv(self.edge_feat_dims[3], self.num_filters[3], self.initializer)
-        self.layer33 = EdgeSmoothing()
-        
-        self.layer4  = InvariantEdgeConv(self.edge_feat_dims[4], self.num_filters[4], self.initializer)
-        self.layer44 = EdgeSmoothing()
-        
-        self.layer5  = InvariantEdgeConv(self.edge_feat_dims[5], self.num_filters[5], self.initializer)
-        self.layer55 = EdgeSmoothing()
-        
-        self.layer6  = InvariantEdgeConv(self.edge_feat_dims[6], self.num_filters[6], self.initializer)
-        self.layer66 = EdgeSmoothing()
-        
-        self.layer7  = InvariantEdgeConv(self.edge_feat_dims[7], self.num_filters[7], self.initializer)
-        self.layer77 = EdgeSmoothing()
+        self.edge_convs = [
+            InvariantEdgeConv(self.edge_feat_dims[i], self.num_filters[i], self.mlp_width, self.initializer)
+            for i in range(depth)  # sequential layers of InvariantEdgeConv
+        ]
+
+        self.smoothing_layers = [
+            EdgeSmoothing() for _ in range(depth)  # sequential layers of EdgeSmoothing
+        ]
        
-        self.layer8 = tf.keras.layers.Dense(3, activation=None, kernel_initializer=self.initializer)
+        self.out_layer = tf.keras.layers.Dense(3, activation=None, kernel_initializer=self.initializer)
     
     def call(self, node_input, edges, edge_input, smoothing_weights):
 
-        # graph convolution
-        new_node_features_0, new_edge_features_0 = self.layer0(node_input, edge_input, edges)
+        new_node_features = node_input
+        new_edge_features = edge_input
 
-        # smoothing plus concatenation
-        smoothed_0          = self.layer00(node_input[:, 0:2], new_node_features_0, edges, smoothing_weights)
-
-        new_node_features_1, new_edge_features_1 = self.layer1(smoothed_0, new_edge_features_0, edges)
-        smoothed_1          = self.layer11(node_input[:, 0:2], new_node_features_1, edges, smoothing_weights)
-
-        new_node_features_2, new_edge_features_2 = self.layer2(smoothed_1, new_edge_features_1, edges)
-        smoothed_2          = self.layer22(node_input[:, 0:2], new_node_features_2, edges, smoothing_weights)
-
-        new_node_features_3, new_edge_features_3 = self.layer3(smoothed_2, new_edge_features_2, edges)
-        smoothed_3          = self.layer33(node_input[:, 0:2], new_node_features_3, edges, smoothing_weights)
-
-        new_node_features_4, new_edge_features_4 = self.layer4(smoothed_3, new_edge_features_3, edges)
-        smoothed_4          = self.layer44(node_input[:, 0:2], new_node_features_4, edges, smoothing_weights)
-
-        new_node_features_5, new_edge_features_5 = self.layer5(smoothed_4, new_edge_features_4, edges)
-        smoothed_5          = self.layer55(node_input[:, 0:2], new_node_features_5, edges, smoothing_weights)
-
-        new_node_features_6, new_edge_features_6 = self.layer6(smoothed_5, new_edge_features_5, edges)
-        smoothed_6          = self.layer66(node_input[:, 0:2], new_node_features_6, edges, smoothing_weights)
-
-        new_node_features_7, new_edge_features_7 = self.layer7(smoothed_6, new_edge_features_6, edges)
-        smoothed_7          = self.layer77(node_input[:, 0:2], new_node_features_7, edges, smoothing_weights)
+        # Iterate through the graph convolution layers and smoothing layers
+        for i in range(self.depth):
+            new_node_features, new_edge_features = self.edge_convs[i](new_node_features, new_edge_features, edges)
+            new_node_features = self.smoothing_layers[i](node_input[:, 0:2], new_node_features, edges, smoothing_weights)
 
         # output dense layer, without nonlinear activation
-        node_outputs                             = self.layer8(smoothed_7[:, 0:])
+        node_outputs                             = self.out_layer(new_node_feature[:, 0:])
 
         return node_outputs
